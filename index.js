@@ -6,6 +6,7 @@ const { promisify } = require('util');
 const readFilePromisify = promisify(fs.readFile);
 const existsPromisify = promisify(fs.exists);
 const statPromisify = promisify(fs.stat);
+const readDirPromisify = promisify(fs.readdir);
 
 const fileExtension = {
   '.html': 'text/html',
@@ -29,12 +30,16 @@ http
       return;
     }
     if ((await statPromisify(pathname)).isDirectory()) {
-      pathname += 'index.html';
+      try {
+        const dirData = await readDirPromisify(pathname);
+        res.end(dirData.toString('utf8'));
+      } catch (err) {
+        console.log(err);
+      }
     }
     try {
       const data = await readFilePromisify(pathname);
-      const ext = path.parse(pathname).ext;
-      res.setHeader('Content-Type', fileExtension[ext] || 'text/plain');
+      res.setHeader('Content-Type', 'text/plain');
       res.end(data);
     } catch (err) {
       res.statusCode = 500;
